@@ -152,3 +152,19 @@ def load_dataset(dataset_name: str):
             status_code=500,
             detail=f"Failed to parse dataset {dataset_name}: {str(e)}"
         )
+
+
+def process_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process the dataset by removing the 'Iris-' prefix from the 'Species' column.
+
+    Args:
+        df (pd.DataFrame): The input dataset.
+
+    Returns:
+        pd.DataFrame: The processed dataset with updated 'Species' column.
+    """
+    if 'Species' in df.columns:
+        df['Species'] = df['Species'].str.replace('Iris-', '', regex=False)
+    return df
+
