@@ -2,6 +2,7 @@ from fastapi import HTTPException
 import json
 import os
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 def get_dataset(dataset: str):
 
@@ -168,3 +169,25 @@ def process_dataset(df: pd.DataFrame) -> pd.DataFrame:
         df['Species'] = df['Species'].str.replace('Iris-', '', regex=False)
     return df
 
+
+def split_dataset(df: pd.DataFrame):
+    """
+    Fonction pour diviser un dataset en ensembles d'entraînement et de test.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à diviser.
+
+    Returns:
+        tuple: Deux DataFrames, l'un pour l'ensemble d'entraînement et l'autre pour l'ensemble de test.
+    """
+    try:
+        X = df.drop(columns=['Species'])
+        y = df['Species']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        train_data = X_train.copy()
+        train_data['Species'] = y_train
+        test_data = X_test.copy()
+        test_data['Species'] = y_test
+        return train_data, test_data
+    except Exception as e:
+        raise ValueError(f"Erreur lors de la séparation du dataset : {str(e)}")
