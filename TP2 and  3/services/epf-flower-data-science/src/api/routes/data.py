@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset
+from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset
 
 router = APIRouter()
 
@@ -136,4 +136,37 @@ async def process_dataset_endpoint(dataset_name: str):
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while processing dataset {dataset_name}: {str(e)}"
+        )
+    
+
+@router.get("/split-dataset/{dataset_name}")
+async def split_dataset_endpoint(dataset_name: str):
+    """
+    Endpoint pour diviser un dataset en ensembles d'entraînement et de test et retourner les deux sous forme JSON.
+
+    Args:
+        dataset_name (str): Le nom du dataset à diviser.
+    
+    Returns:
+        dict: Un message de succès et les données divisées sous forme JSON.
+    """
+    try:
+        df = load_dataset(dataset_name)
+        df_processed = process_dataset(df)
+        train_data, test_data = split_dataset(df_processed)
+        train_data_content = train_data.to_dict(orient="records")
+        test_data_content = test_data.to_dict(orient="records")
+        return JSONResponse(
+            content={
+                "message": f"Dataset {dataset_name} divisé avec succès en ensembles d'entraînement et de test.",
+                "train": train_data_content,
+                "test": test_data_content
+            }
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Une erreur est survenue lors de la séparation du dataset {dataset_name}: {str(e)}"
         )
