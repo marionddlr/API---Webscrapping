@@ -1,0 +1,10 @@
+{
+    "iris": {
+        "name": "iris",
+        "url": "https://www.kaggle.com/datasets/uciml/iris"
+    },
+    "wine": {
+        "name": "wine",
+        "url": "https://www.kaggle.com/uciml/red-wine-quality-cortez-et-al"
+    }
+}
