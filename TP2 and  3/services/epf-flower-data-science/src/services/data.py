@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import joblib
+from google.cloud import firestore
 
 def get_dataset(dataset: str):
 
@@ -257,3 +258,89 @@ def predict_species(dataset_name: str, input_data: dict):
             status_code=500,
             detail=f"An error occurred during the prediction process: {str(e)}"
         )
+    
+
+def parameters_firestore():
+    """Retrieve parameters from Firestore.
+
+    This function connects to Firestore using a service account key, retrieves 
+    the parameters document from the "parameters" collection, and returns its content.
+
+    Raises:
+        HTTPException: If there is an issue with connecting to Firestore or 
+        retrieving the parameters.
+
+    Returns:
+        dict: A dictionary containing the parameters stored in Firestore.
+    """
+    credentials_path = 'TP2 and  3/services/epf-flower-data-science/src/config//google.json'
+    try:
+        db = firestore.Client.from_service_account_json(credentials_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la connexion à Firestore: {str(e)}")
+    try:
+        doc_ref = db.collection('parameters').document('parameters')
+        doc = doc_ref.get()
+        if doc.exists:
+            return doc.to_dict()
+        else:
+            raise HTTPException(status_code=404, detail="Les paramètres n'ont pas été trouvés dans Firestore.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des paramètres : {str(e)}")
+    
+
+def add_parameters_to_firestore(new_params: dict):
+    """Add new parameters to Firestore.
+
+    This function will add a new document or update an existing document in 
+    the Firestore collection 'parameters' with the provided parameters.
+
+    Args:
+        new_params (dict): The dictionary containing parameters to add or update.
+
+    Raises:
+        HTTPException: If there is an error connecting to Firestore or saving data.
+
+    Returns:
+        dict: The parameters that were added or updated in Firestore.
+    """
+    credentials_path = 'TP2 and  3/services/epf-flower-data-science/src/config/google.json'
+    try:
+        db = firestore.Client.from_service_account_json(credentials_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to Firestore: {str(e)}")
+    try:
+        doc_ref = db.collection('parameters').document('parameters')
+        doc_ref.set(new_params)
+        return new_params
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding parameters to Firestore: {str(e)}")
+
+
+def update_parameters_in_firestore(updated_params: dict):
+    """Update parameters in Firestore.
+
+    This function updates an existing document in Firestore under the 
+    'parameters' collection.
+
+    Args:
+        updated_params (dict): The dictionary of parameters to update.
+
+    Raises:
+        HTTPException: If there is an error updating the parameters in Firestore.
+
+    Returns:
+        dict: The updated parameters in Firestore.
+    """
+    credentials_path = 'TP2 and  3/services/epf-flower-data-science/src/config/google.json'
+    try:
+        db = firestore.Client.from_service_account_json(credentials_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to Firestore: {str(e)}")
+    try:
+        doc_ref = db.collection('parameters').document('parameters')
+        doc_ref.update(updated_params)
+        return updated_params
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating parameters in Firestore: {str(e)}")
+
