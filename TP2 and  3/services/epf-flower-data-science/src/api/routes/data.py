@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset, train_model
+from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset, train_model, predict_species
 
 router = APIRouter()
 
@@ -203,4 +203,31 @@ async def train_model_endpoint(dataset_name: str):
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred: {str(e)}"
+        )
+    
+
+@router.post("/predict/{dataset_name}")
+async def predict_with_model(dataset_name: str, input_data: dict):
+    """
+    Endpoint to make predictions with a trained classification model.
+
+    Args:
+        dataset_name (str): The name of the dataset used for training.
+        input_data (dict): The input data for making predictions.
+
+    Returns:
+        dict: A dictionary containing the prediction result.
+    
+    Raises:
+        HTTPException: If any error occurs during the prediction process.
+    """
+    try:
+        result = predict_species(dataset_name, input_data)
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred during the prediction process: {str(e)}"
         )

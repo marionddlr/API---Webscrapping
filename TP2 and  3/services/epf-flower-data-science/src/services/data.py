@@ -169,6 +169,7 @@ def process_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
     if 'Species' in df.columns:
         df['Species'] = df['Species'].str.replace('Iris-', '', regex=False)
+        df = df.drop(columns=["Id"])
     return df
 
 
@@ -226,4 +227,33 @@ def train_model(X_train, y_train, model_config_path, save_path):
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred during training or saving the model: {str(e)}"
+        )
+    
+
+def predict_species(dataset_name: str, input_data: dict):
+    """
+    Make predictions using a trained classification model.
+
+    Args:
+        dataset_name (str): The name of the dataset used for training.
+        input_data (dict): The input data for making predictions.
+
+    Returns:
+        dict: A dictionary with the predicted class and any necessary metadata.
+
+    Raises:
+        HTTPException: If the model is not found or there is an error in the prediction process.
+    """
+    try:
+        model_path = f'TP2 and  3/services/epf-flower-data-science/src/models/{dataset_name}_model.pkl'
+        if not os.path.exists(model_path):
+            raise HTTPException(status_code=404, detail="Model not found")
+        model = joblib.load(model_path)
+        input_df = pd.DataFrame([input_data])
+        prediction = model.predict(input_df)
+        return {"predicted_class": prediction[0]}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred during the prediction process: {str(e)}"
         )
