@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset
+from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset, train_model
 
 router = APIRouter()
 
@@ -169,4 +169,38 @@ async def split_dataset_endpoint(dataset_name: str):
         raise HTTPException(
             status_code=500,
             detail=f"Une erreur est survenue lors de la séparation du dataset {dataset_name}: {str(e)}"
+        )
+
+
+@router.post("/train-model/{dataset_name}")
+async def train_model_endpoint(dataset_name: str):
+    """
+    Endpoint to train a classification model with a processed dataset.
+
+    Args:
+        dataset_name (str): The name of the dataset to use for training.
+
+    Returns:
+        dict: A success message and the path to the saved model.
+
+    Raises:
+        HTTPException: If any error occurs during the process.
+    """
+    try:
+        df = load_dataset(dataset_name)
+        processed_df = process_dataset(df)
+        train_data, test_data = split_dataset(processed_df)
+        X_train = train_data.drop(columns=["Species"])
+        y_train = train_data["Species"]
+        model_config_path = 'TP2 and  3/services/epf-flower-data-science/src/config/model_parameters.json'
+        model_save_path = f'TP2 and  3/services/epf-flower-data-science/src/models/{dataset_name}_model.pkl'
+        result = train_model(X_train, y_train, model_config_path, model_save_path)
+        return result
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred: {str(e)}"
         )

@@ -3,6 +3,8 @@ import json
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+import joblib
 
 def get_dataset(dataset: str):
 
@@ -172,13 +174,13 @@ def process_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
 def split_dataset(df: pd.DataFrame):
     """
-    Fonction pour diviser un dataset en ensembles d'entraînement et de test.
+    Function to split a dataset into training and test sets.
 
     Args:
-        df (pd.DataFrame): Le DataFrame à diviser.
+        df (pd.DataFrame): The DataFrame to split.
 
     Returns:
-        tuple: Deux DataFrames, l'un pour l'ensemble d'entraînement et l'autre pour l'ensemble de test.
+        tuple: Two DataFrames, one for the training set and one for the test set.
     """
     try:
         X = df.drop(columns=['Species'])
@@ -191,3 +193,37 @@ def split_dataset(df: pd.DataFrame):
         return train_data, test_data
     except Exception as e:
         raise ValueError(f"Erreur lors de la séparation du dataset : {str(e)}")
+
+
+def train_model(X_train, y_train, model_config_path, save_path):
+    """
+    Train a logistic regression model with the training data and save the model.
+
+    Args:
+        X_train (pd.DataFrame): The training features.
+        y_train (pd.Series): The training labels.
+        model_config_path (str): The path to the JSON file containing the model parameters.
+        save_path (str): The path to save the trained model.
+
+    Raises:
+        HTTPException: If an error occurs during training or saving.
+
+    Returns:
+        dict: Success message and the path to the saved model.
+    """
+    try:
+        with open(model_config_path, 'r') as f:
+            model_config = json.load(f)
+        model = LogisticRegression(**model_config['parameters'])
+        model.fit(X_train, y_train)
+        joblib.dump(model, save_path)
+        return {
+            "message": "Model trained and saved successfully.",
+            "model_path": save_path
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred during training or saving the model: {str(e)}"
+        )
