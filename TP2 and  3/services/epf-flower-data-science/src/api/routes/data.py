@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset, train_model, predict_species
+from services.data import get_dataset, add_dataset, modify_dataset, load_dataset, process_dataset, split_dataset, train_model, predict_species, parameters_firestore, add_parameters_to_firestore, update_parameters_in_firestore
 
 router = APIRouter()
 
@@ -231,3 +231,76 @@ async def predict_with_model(dataset_name: str, input_data: dict):
             status_code=500,
             detail=f"An error occurred during the prediction process: {str(e)}"
         )
+
+
+@router.get("/get-parameters")
+async def get_parameters():
+    """Endpoint to retrieve parameters from Firestore.
+
+    This endpoint calls the `parameters_firestore` function to fetch the parameters
+    stored in Firestore and returns them in the response.
+
+    Raises:
+        HTTPException: If there is an error while retrieving the parameters from Firestore.
+
+    Returns:
+        dict: A dictionary containing the retrieved parameters.
+    """
+    try:
+        params = parameters_firestore()
+        return {"params": params}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des paramètres: {str(e)}")
+
+
+# Endpoint to add parameters
+@router.post("/add-parameters")
+async def add_parameters(params: dict):
+    """Endpoint to add parameters to Firestore.
+
+    This endpoint accepts parameters in the form of a JSON object and stores
+    them in Firestore under the 'parameters' document in the 'parameters' collection.
+
+    Args:
+        params (dict): A dictionary containing the new parameters.
+
+    Raises:
+        HTTPException: If an error occurs while adding the parameters to Firestore.
+
+    Returns:
+        dict: A success message and the added parameters.
+    """
+    try:
+        result = add_parameters_to_firestore(params)
+        return {"message": "Parameters added successfully", "data": result}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding parameters: {str(e)}")
+
+
+@router.put("/update-parameters")
+async def update_parameters(params: dict):
+    """Endpoint to update parameters in Firestore.
+
+    This endpoint accepts parameters in the form of a JSON object and updates 
+    the existing parameters in Firestore under the 'parameters' document.
+
+    Args:
+        params (dict): A dictionary containing the parameters to update.
+
+    Raises:
+        HTTPException: If an error occurs while updating the parameters in Firestore.
+
+    Returns:
+        dict: A success message and the updated parameters.
+    """
+    try:
+        result = update_parameters_in_firestore(params)
+        return {"message": "Parameters updated successfully", "data": result}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating parameters: {str(e)}")

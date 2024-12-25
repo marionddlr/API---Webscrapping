@@ -1,6 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
-
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),'..', '..', '..', '..')))
+from main import get_application
 
 class TestHelloRoute:
     @pytest.fixture
@@ -8,9 +11,6 @@ class TestHelloRoute:
         """
         Test client for integration tests
         """
-
-        from main import get_application
-
         app = get_application()
 
         client = TestClient(app, base_url="http://testserver")
