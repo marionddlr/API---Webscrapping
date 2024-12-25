@@ -59,7 +59,7 @@ def test_split_dataset(client):
         assert "test" in json_response
 
 def test_train_model(client):
-    dataset_name = "example_dataset"
+    dataset_name = "iris"
     response = client.post(f"/train-model/{dataset_name}")
     assert response.status_code in [200, 404]  
     assert "message" in response.json()
