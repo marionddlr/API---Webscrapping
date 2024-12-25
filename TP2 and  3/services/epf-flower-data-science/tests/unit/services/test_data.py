@@ -23,26 +23,22 @@ from src.services.data import (
     update_parameters_in_firestore
 )
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), '/src/config/config.json')
-
 @pytest.fixture
 def mock_config_file():
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_config_file:
-        tmp_config_file.close()
-        test_config = {
+    with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_config_file:
+        config_data = {
             "example_dataset": {
                 "name": "example_dataset",
                 "url": "http://example.com/dataset.csv"
             }
         }
-        with open(tmp_config_file.name, 'w') as f:
-            json.dump(test_config, f, indent=4)
-        
+        json.dump(config_data, tmp_config_file, indent=4)
+        tmp_config_file.close()
         yield tmp_config_file.name
-        os.remove(tmp_config_file.name)
+    os.remove(tmp_config_file.name)
 
 def test_get_dataset(mock_config_file):
-    with patch('CONFIG_PATH', mock_config_file):
+    with patch('src.services.data.CONFIG_PATH', mock_config_file):
         dataset = get_dataset("example_dataset")
         assert dataset == {
             "name": "example_dataset",
@@ -116,18 +112,22 @@ def test_split_dataset():
     assert 'Species' in train_data.columns and 'Species' in test_data.columns
 
 def test_train_model():
-    # Préparation des données de test
     X_train = pd.DataFrame({
-        "feature1": [1, 2, 3],
-        "feature2": [4, 5, 6]
+        "feature1": [1, 2],
+        "feature2": [4, 5]
     })
-    y_train = pd.Series(["class1", "class2", "class3"])
-    model_config_path = 'TP2 and  3/services/epf-flower-data-science/src/config/model_parameters.json'
+    y_train = pd.Series(["class1", "class2"])
+    model_config_path = tempfile.NamedTemporaryFile(delete=False, mode='w').name
     save_path = 'model_test.pkl'
+
+    with open(model_config_path, 'w') as f:
+        json.dump({"parameters": {"max_iter": 100}}, f)
+
     result = train_model(X_train, y_train, model_config_path, save_path)
     assert result['message'] == 'Model trained and saved successfully.'
     assert os.path.exists(save_path)
     os.remove(save_path)
+    os.remove(model_config_path)
 
 def test_predict_species():
     X_train = pd.DataFrame({
